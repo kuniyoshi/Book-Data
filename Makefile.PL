@@ -3,6 +3,10 @@ name 'Book-Data';
 all_from 'lib/Book/Data.pm';
 
 # requires '';
+requires "Readonly";
+requires "MongoDB";
+requires "WWW::Amazon::BookInfo";
+requires "Config::Pit";
 
 tests 't/*.t';
 author_tests 'xt';
