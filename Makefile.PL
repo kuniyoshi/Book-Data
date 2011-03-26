@@ -7,6 +7,7 @@ requires "Readonly";
 requires "MongoDB";
 requires "WWW::Amazon::BookInfo";
 requires "Config::Pit";
+requires "DateTime::Format::Strptime";
 
 tests 't/*.t';
 author_tests 'xt';

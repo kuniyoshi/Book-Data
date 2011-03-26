@@ -18,7 +18,7 @@ Readonly my @NEED_INIT_FIELDS => qw( conn ua );
 has conn => ( is => "rw", isa => "MongoDB::Connection"   );
 has ua   => ( is => "rw", isa => "WWW::Amazon::BookInfo" );
 
-our $VERSION = "0.02";
+our $VERSION = "0.03";
 
 sub new {
     my $class = shift;
@@ -92,7 +92,7 @@ sub book_info_to_hash_ref {
     return $ref;
 }
 
-sub record_to_object {
+sub document_to_object {
     my $self       = shift;
     my $record_ref = shift
         or croak "Record required.";
@@ -158,8 +158,9 @@ Book::Data -
 =head1 SYNOPSIS
 
   use Book::Data;
-  my $data = Book::Data->new;
-  my $book = 
+  my $util     = Book::Data->new;
+  my $document = $util->find( { isbn => $isbn } );
+  my $book     = $util->document_to_object( $document );
 
 =head1 DESCRIPTION
 
