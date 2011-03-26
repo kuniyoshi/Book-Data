@@ -7,6 +7,7 @@ use Readonly;
 use Carp qw( croak );
 use Scalar::Util qw( blessed );
 use DateTime;
+use Business::ISBN;
 use Config::Pit ();
 use MongoDB;
 use WWW::Amazon::BookInfo;
@@ -14,7 +15,7 @@ use Book::Data::Book;
 
 Readonly my @NEED_INIT_FIELDS => qw( conn ua );
 
-has conn => ( is => "rw", isa => "MongoDB::Connection" );
+has conn => ( is => "rw", isa => "MongoDB::Connection"   );
 has ua   => ( is => "rw", isa => "WWW::Amazon::BookInfo" );
 
 our $VERSION = "0.02";
@@ -54,6 +55,22 @@ sub init_ua {
     return $self->ua;
 }
 
+sub get_isbn {
+    my $self = shift;
+    my $isbn = shift
+        or croak "ISBN required.";
+
+    return $isbn
+        if blessed $isbn && $isbn->isa( "Business::ISBN" );
+
+    my $object = Business::ISBN->new( $isbn );
+
+    die "Could not make ISBN object from [$isbn]"
+        if ! blessed $isbn || ! $isbn->isa( "Business::ISBN" );
+
+    return $object;
+}
+
 sub book_info_to_hash_ref {
     my $self = shift;
     my $res  = shift
@@ -67,10 +84,10 @@ sub book_info_to_hash_ref {
         qw( authors numpages publication_date title isbn publisher )
     };
     $ref->{isbn}      = $ref->{isbn}->as_string;
-    $res->{images}    = [
-        map { $_ => $res->image( $_ ) } @WWW::Amazon::BookInfo::IMAGE_TYPES,
+    $ref->{images}    = [
+        map { +{ $_ => $res->image( $_ ) } } @WWW::Amazon::BookInfo::Response::IMAGE_TYPES,
     ];
-    $res->{timestamp} = DateTime->now( time_zone => "Asia/Tokyo" );
+    $ref->{timestamp} = DateTime->now( time_zone => "Asia/Tokyo" )->datetime;
 
     return $ref;
 }
@@ -89,14 +106,17 @@ sub update {
     my $isbn  = do {
         my $candidate = $param{isbn}
             or croak "ISBN required.";
-        Business::ISBN->new( $candidate );
+        $self->get_isbn( $candidate );
     };
 
-    my $res  = $self->ua->search( %{ $options[0] } );
+    my $res  = $self->ua->search( isbn => $isbn );
     my $ref  = $self->book_info_to_hash_ref( $res );
-    my $book = $self->conn->book->books->save( $ref );
 
-    return $self->find( @options );
+    my $cursor = $self->conn->book->books->remove( { isbn => $isbn->as_isbn13->as_string } );
+
+    $self->conn->book->books->save( $ref );
+
+    return $self->find( { isbn => $isbn } );
 }
 
 sub find {
@@ -108,9 +128,8 @@ sub find {
             unless ref $condition_ref eq ref { };
 
         if ( exists $condition_ref->{isbn} ) {
-            if ( blessed $condition_ref->{isbn} && $condition_ref->{isbn}->isa( "Business::ISBN" ) ) {
-                $condition_ref->{isbn} = $condition_ref->{isbn}->as_isbn13->as_string;
-            }
+            $condition_ref->{isbn}
+                = $self->get_isbn( $condition_ref->{isbn} )->as_isbn13->as_string;
         }
     }
 

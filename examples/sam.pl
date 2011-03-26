@@ -19,6 +19,10 @@ my @isbns = map { Business::ISBN->new( $_ ) } <>;
 my $util = Book::Data->new;
 
 foreach my $isbn ( @isbns ) {
+    $util->update( isbn => $isbn );
+}
+
+foreach my $isbn ( @isbns ) {
     my $book = $util->find( { isbn => $isbn } )->next;
     say Dumper $book;
 }
