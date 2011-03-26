@@ -6,6 +6,7 @@ use Class::Accessor "antlers";
 use Readonly;
 use Carp qw( croak );
 use Scalar::Util qw( blessed );
+use Storable qw( dclone );
 use DateTime;
 use Business::ISBN;
 use Config::Pit ();
@@ -18,7 +19,7 @@ Readonly my @NEED_INIT_FIELDS => qw( conn ua );
 has conn => ( is => "rw", isa => "MongoDB::Connection"   );
 has ua   => ( is => "rw", isa => "WWW::Amazon::BookInfo" );
 
-our $VERSION = "0.03";
+our $VERSION = "0.04";
 
 sub new {
     my $class = shift;
@@ -97,7 +98,7 @@ sub document_to_object {
     my $record_ref = shift
         or croak "Record required.";
 
-    return bless $record_ref, "Book::Data::Book";
+    return bless dclone( $record_ref ), "Book::Data::Book";
 }
 
 sub update {

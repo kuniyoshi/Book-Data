@@ -21,7 +21,7 @@ my $util = Book::Data->new;
 foreach my $isbn ( @isbns ) {
     my $book = $util->find( { isbn => $isbn } )->next;
     my $object = $util->document_to_object( $book );
-    say $book->datetime->date;
+    say $book->title;
     #    say Dumper $book;
 }
 
