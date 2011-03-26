@@ -17,7 +17,7 @@ Readonly my @NEED_INIT_FIELDS => qw( conn ua );
 has conn => ( is => "rw", isa => "MongoDB::Connection" );
 has ua   => ( is => "rw", isa => "WWW::Amazon::BookInfo" );
 
-our $VERSION = "0.01";
+our $VERSION = "0.02";
 
 sub new {
     my $class = shift;
