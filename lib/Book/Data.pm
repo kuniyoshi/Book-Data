@@ -6,6 +6,7 @@ use Class::Accessor "antlers";
 use Readonly;
 use Carp qw( croak );
 use Scalar::Util qw( blessed );
+use DateTime;
 use Config::Pit ();
 use MongoDB;
 use WWW::Amazon::BookInfo;
@@ -66,7 +67,10 @@ sub book_info_to_hash_ref {
         qw( authors numpages publication_date title isbn publisher )
     };
     $ref->{isbn}      = $ref->{isbn}->as_string;
-    $ref->{thumbnail} = $res->image( "thumbnail" );
+    $res->{images}    = [
+        map { $_ => $res->image( $_ ) } @WWW::Amazon::BookInfo::IMAGE_TYPES,
+    ];
+    $res->{timestamp} = DateTime->now( time_zone => "Asia/Tokyo" );
 
     return $ref;
 }
@@ -77,6 +81,22 @@ sub record_to_object {
         or croak "Record required.";
 
     return bless $record_ref, "Book::Data::Book";
+}
+
+sub update {
+    my $self  = shift;
+    my %param = @_;
+    my $isbn  = do {
+        my $candidate = $param{isbn}
+            or croak "ISBN required.";
+        Business::ISBN->new( $candidate );
+    };
+
+    my $res  = $self->ua->search( %{ $options[0] } );
+    my $ref  = $self->book_info_to_hash_ref( $res );
+    my $book = $self->conn->book->books->save( $ref );
+
+    return $self->find( @options );
 }
 
 sub find {
@@ -99,15 +119,12 @@ sub find {
     return $cursor
         if $cursor->has_next;
 
-    if ( @options == 1 && keys %{ $options[0] } == 1 && $options[0]->{isbn} ) {
-        my $res  = $self->ua->search( %{ $options[0] } );
-        my $ref  = $self->book_info_to_hash_ref( $res );
-        my $book = $self->conn->book->books->save( $ref );
-        return $self->find( @options );
-    }
-    else {
-        return;
-    }
+    my( $isbn ) = map  { $_->{isbn} }
+                  grep { exists $_->{isbn} }
+                  grep { ref $_ eq ref { } }
+                  @options;
+
+    return $self->update( isbn => $isbn );
 }
 
 1;

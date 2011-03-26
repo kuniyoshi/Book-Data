@@ -26,6 +26,6 @@ foreach my $isbn ( @isbns ) {
 exit;
 
 sub usage {
-    return "usage: $0 <isbn>\n";
+    return "usage: $0 <file.isbn.list>\n";
 }
 
