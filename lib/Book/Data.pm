@@ -19,7 +19,7 @@ Readonly my @NEED_INIT_FIELDS => qw( conn ua );
 has conn => ( is => "rw", isa => "MongoDB::Connection"   );
 has ua   => ( is => "rw", isa => "WWW::Amazon::BookInfo" );
 
-our $VERSION = "0.04";
+our $VERSION = "0.05";
 
 sub new {
     my $class = shift;
@@ -67,7 +67,7 @@ sub get_isbn {
     my $object = Business::ISBN->new( $isbn );
 
     die "Could not make ISBN object from [$isbn]"
-        if ! blessed $isbn || ! $isbn->isa( "Business::ISBN" );
+        if ! blessed $object || ! $object->isa( "Business::ISBN" );
 
     return $object;
 }
