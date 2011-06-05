@@ -19,7 +19,7 @@ Readonly my @NEED_INIT_FIELDS => qw( conn ua );
 has conn => ( is => "rw", isa => "MongoDB::Connection"   );
 has ua   => ( is => "rw", isa => "WWW::Amazon::BookInfo" );
 
-our $VERSION = "0.05";
+our $VERSION = "0.06";
 
 sub new {
     my $class = shift;
@@ -85,9 +85,9 @@ sub book_info_to_hash_ref {
         qw( authors numpages publication_date title isbn publisher )
     };
     $ref->{isbn}      = $ref->{isbn}->as_string;
-    $ref->{images}    = [
-        map { +{ $_ => $res->image( $_ ) } } @WWW::Amazon::BookInfo::Response::IMAGE_TYPES,
-    ];
+    $ref->{images}    = {
+        map { $_ => $res->image( $_ ) } @WWW::Amazon::BookInfo::Response::IMAGE_TYPES,
+    };
     $ref->{timestamp} = DateTime->now( time_zone => "Asia/Tokyo" )->datetime;
 
     return $ref;

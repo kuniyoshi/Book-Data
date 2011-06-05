@@ -1,5 +1,7 @@
 Revision history for Perl extension Book::Data
 
+0.06    Sun Jul  5 19:00:00 2011
+        - Change images from array-ref to hash-ref.
 0.05    Sun Mar 27  0:48:24 2011
         - Fix a bug in isbn object.
 0.04    Sat Mar 26 11:51:51 2011
